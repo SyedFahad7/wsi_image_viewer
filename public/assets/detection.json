@@ -1,0 +1,11 @@
+{
+    "detection_results": [
+      { "x": 100, "y": 100, "width": 50, "height": 50, "label": "Sickle Cell" },
+      { "x": 200, "y": 150, "width": 60, "height": 40, "label": "Sickle Cell" },
+      { "x": 300, "y": 200, "width": 55, "height": 45, "label": "Sickle Cell" },
+      { "x": 400, "y": 250, "width": 45, "height": 55, "label": "Sickle Cell" },
+      { "x": 500, "y": 300, "width": 50, "height": 50, "label": "Sickle Cell" },
+      { "x": 150, "y": 350, "width": 60, "height": 40, "label": "Sickle Cell" },
+      { "x": 250, "y": 400, "width": 55, "height": 45, "label": "Sickle Cell" }
+    ]
+  }
