@@ -16,7 +16,7 @@ function App() {
         <Header />
         
         <main className="flex flex-1 overflow-hidden">
-          {/* Findings Panel (Left) */}
+
           <div className="w-1/4 border-r border-gray-200 dark:border-gray-700">
             <FindingsPanel />
           </div>

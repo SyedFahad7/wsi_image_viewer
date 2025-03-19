@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import OpenSeadragon from "openseadragon";
-import { ZoomIn, ZoomOut, Filter, Grid, X } from "lucide-react";
+import { ZoomIn, ZoomOut, Filter, Grid, X, Move, Maximize, Minimize, PlusCircle } from "lucide-react";
 
 const ImageViewer = ({ imageUrl }) => {
   const viewerRef = useRef(null);
@@ -12,6 +12,11 @@ const ImageViewer = ({ imageUrl }) => {
   const [saturation, setSaturation] = useState(100);
   const [gamma, setGamma] = useState(100);
   const [gridSize, setGridSize] = useState(null);
+  const [activeElement, setActiveElement] = useState(null);
+  const [elementSize, setElementSize] = useState(50);
+  const [dragging, setDragging] = useState(false);
+  const [elementPosition, setElementPosition] = useState({ x: "50%", y: "50%" });
+  const [elementOptionsVisible, setElementOptionsVisible] = useState(false);
 
   useEffect(() => {
     if (!imageUrl) {
@@ -23,12 +28,15 @@ const ImageViewer = ({ imageUrl }) => {
       osdViewer.current = OpenSeadragon({
         id: "openseadragon-viewer",
         tileSources: imageUrl,
-        showNavigator: false, // Removed OpenSeadragon's default toolbar
+        showNavigator: false,
         defaultZoomLevel: 1,
         minZoomLevel: 0.5,
         maxZoomLevel: 50,
         visibilityRatio: 1,
         constrainDuringPan: true,
+        showFullPageControl: false,
+        showHomeControl: false,
+        showZoomControl: false,
       });
 
       osdViewer.current.addHandler("zoom", () => {
@@ -73,11 +81,11 @@ const ImageViewer = ({ imageUrl }) => {
     const grid = document.getElementById("grid-overlay");
     if (!grid) return;
 
-    grid.innerHTML = ""; // Clear previous grid
+    grid.innerHTML = "";
 
-    const step = 100 / size; 
+    const step = 500 / size; 
     for (let i = 0; i < size; i++) {
-      // Vertical lines
+
       const vLine = document.createElement("div");
       vLine.style.position = "absolute";
       vLine.style.left = `${i * step}%`;
@@ -99,8 +107,37 @@ const ImageViewer = ({ imageUrl }) => {
     }
   };
 
+  const handleElementClick = (type) => {
+    setActiveElement(activeElement === type ? null : type);
+  };
+
+  const handleElementDragStart = (e) => {
+    setDragging(true);
+  };
+
+  const handleElementDragEnd = (e) => {
+    setDragging(false);
+  };
+
+  const handleElementDrag = (e) => {
+    if (dragging) {
+      const element = document.getElementById("active-element");
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        setElementPosition({
+          x: e.clientX - rect.width / 2,
+          y: e.clientY - rect.height / 2,
+        });
+      }
+    }
+  };
+
+  const handleElementResize = (e) => {
+    setElementSize(e.target.value);
+  };
+
   return (
-    <div className="relative w-full h-full bg-gray-900 text-white">
+    <div className="relative w-full h-full bg-gray-900 text-white" onMouseMove={handleElementDrag} onMouseUp={handleElementDragEnd}>
       {/* Image Viewer */}
       <div id="openseadragon-viewer" className="w-full h-full"></div>
 
@@ -126,9 +163,11 @@ const ImageViewer = ({ imageUrl }) => {
         <button className="p-2 bg-green-600 text-white rounded" onClick={() => setGridSize(gridSize ? null : 10)}>
           <Grid size={20} />
         </button>
+        <button className="p-2 bg-purple-600 text-white rounded" onClick={() => setElementOptionsVisible(!elementOptionsVisible)}>
+          <PlusCircle size={20} />
+        </button>
       </div>
 
-      {/* Grid Selection */}
       {gridSize && (
         <div className="absolute bottom-5 right-5 bg-black bg-opacity-50 text-white p-2 rounded flex space-x-2">
           {[10, 20, 40, 60, 100].map((size) => (
@@ -157,6 +196,54 @@ const ImageViewer = ({ imageUrl }) => {
           <input type="range" min="50" max="200" value={saturation} onChange={(e) => setSaturation(e.target.value)} />
           <label>Gamma</label>
           <input type="range" min="50" max="200" value={gamma} onChange={(e) => setGamma(e.target.value)} />
+        </div>
+      )}
+
+      {/* Element Options */}
+      {elementOptionsVisible && (
+        <div className="absolute bottom-20 right-5 bg-black bg-opacity-50 p-4 rounded">
+          <button className="absolute top-1 right-1 text-red-500" onClick={() => setElementOptionsVisible(false)}>
+            <X size={18} />
+          </button>
+          <button className="p-2 bg-gray-800 text-white rounded" onClick={() => handleElementClick("line")}>
+            <Move size={20} />
+          </button>
+          <button className="p-2 bg-gray-800 text-white rounded" onClick={() => handleElementClick("cross")}>
+            <X size={20} />
+          </button>
+          <input
+            type="range"
+            min="20"
+            max="100"
+            value={elementSize}
+            onChange={handleElementResize}
+            className="p-2 bg-gray-800 text-white rounded"
+          />
+        </div>
+      )}
+
+      {/* Active Element */}
+      {activeElement && (
+        <div
+          id="active-element"
+          className="absolute"
+          style={{
+            width: `${elementSize}px`,
+            height: `${elementSize}px`,
+            left: elementPosition.x,
+            top: elementPosition.y,
+            cursor: "move",
+          }}
+          onMouseDown={handleElementDragStart}
+          onMouseUp={handleElementDragEnd}
+        >
+          {activeElement === "line" && <div className="w-full h-1 bg-red-500"></div>}
+          {activeElement === "cross" && (
+            <div className="relative w-full h-full">
+              <div className="absolute w-1 h-full bg-red-500 left-1/2 transform -translate-x-1/2"></div>
+              <div className="absolute h-1 w-full bg-red-500 top-1/2 transform -translate-y-1/2"></div>
+            </div>
+          )}
         </div>
       )}
     </div>
